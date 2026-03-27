@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Legal Case Finder</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f1117;
+      color: #e8e8e8;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      font-weight: 600;
+      color: #ffffff;
+      margin-bottom: 8px;
+    }
+
+    header p {
+      color: #888;
+      font-size: 0.95rem;
+    }
+
+    .search-card {
+      background: #1a1d27;
+      border: 1px solid #2a2d3a;
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 28px;
+    }
+
+    textarea {
+      width: 100%;
+      background: #0f1117;
+      border: 1px solid #2a2d3a;
+      border-radius: 10px;
+      color: #e8e8e8;
+      font-size: 0.95rem;
+      padding: 14px 16px;
+      resize: vertical;
+      min-height: 100px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    textarea:focus { border-color: #5b6af0; }
+
+    .models-row {
+      display: flex;
+      gap: 16px;
+      margin: 20px 0;
+    }
+
+    .model-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #0f1117;
+      border: 1px solid #2a2d3a;
+      border-radius: 10px;
+      padding: 12px 18px;
+      cursor: pointer;
+      flex: 1;
+      transition: border-color 0.2s;
+    }
+
+    .model-checkbox:hover { border-color: #5b6af0; }
+    .model-checkbox.active { border-color: #5b6af0; background: #1a1f3a; }
+
+    .model-checkbox input { display: none; }
+
+    .checkmark {
+      width: 18px;
+      height: 18px;
+      border: 2px solid #444;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .model-checkbox.active .checkmark {
+      background: #5b6af0;
+      border-color: #5b6af0;
+    }
+
+    .checkmark::after {
+      content: '';
+      width: 5px;
+      height: 9px;
+      border: 2px solid white;
+      border-top: none;
+      border-left: none;
+      transform: rotate(45deg) translateY(-1px);
+      display: none;
+    }
+
+    .model-checkbox.active .checkmark::after { display: block; }
+
+    .model-info { flex: 1; }
+
+    .model-name {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #e8e8e8;
+    }
+
+    .model-desc {
+      font-size: 0.78rem;
+      color: #666;
+      margin-top: 2px;
+    }
+
+    .search-btn {
+      width: 100%;
+      background: #5b6af0;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 14px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .search-btn:hover { background: #4a59e0; }
+    .search-btn:disabled { background: #2a2d3a; color: #555; cursor: not-allowed; }
+
+    /* Results */
+    .results-section { display: none; }
+
+    .section-title {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 12px;
+    }
+
+    .outcome-card {
+      background: #1a1d27;
+      border: 1px solid #2a2d3a;
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .outcome-label {
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: #5b6af0;
+      text-transform: capitalize;
+    }
+
+    .confidence-bar-wrap {
+      flex: 1;
+    }
+
+    .confidence-text {
+      font-size: 0.8rem;
+      color: #666;
+      margin-bottom: 6px;
+    }
+
+    .confidence-bar {
+      height: 6px;
+      background: #2a2d3a;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .confidence-fill {
+      height: 100%;
+      background: #5b6af0;
+      border-radius: 3px;
+      transition: width 0.6s ease;
+    }
+
+    .case-card {
+      background: #1a1d27;
+      border: 1px solid #2a2d3a;
+      border-radius: 12px;
+      padding: 18px 22px;
+      margin-bottom: 12px;
+      transition: border-color 0.2s;
+    }
+
+    .case-card:hover { border-color: #3a3d4a; }
+
+    .case-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .case-title {
+      font-size: 0.92rem;
+      font-weight: 500;
+      color: #e8e8e8;
+      line-height: 1.4;
+    }
+
+    .similarity-badge {
+      background: #1a2a1a;
+      color: #4caf7d;
+      border: 1px solid #2a4a2a;
+      border-radius: 6px;
+      padding: 3px 10px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .case-footer {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .outcome-pill {
+      font-size: 0.75rem;
+      padding: 3px 10px;
+      border-radius: 20px;
+      text-transform: capitalize;
+      font-weight: 500;
+    }
+
+    .pill-cited        { background:#1a2040; color:#7b8ff0; }
+    .pill-referred\ to { background:#201a20; color:#b07bd4; }
+    .pill-applied      { background:#1a2a20; color:#5abf85; }
+    .pill-followed     { background:#2a2010; color:#d4a84b; }
+    .pill-considered   { background:#202020; color:#888; }
+    .pill-discussed    { background:#201a10; color:#c49a4a; }
+    .pill-distinguished{ background:#2a1a1a; color:#d47b7b; }
+
+    .case-id {
+      font-size: 0.75rem;
+      color: #444;
+    }
+
+    .loader {
+      text-align: center;
+      padding: 40px;
+      color: #555;
+      display: none;
+    }
+
+    .loader-spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid #2a2d3a;
+      border-top-color: #5b6af0;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 12px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-msg {
+      background: #2a1a1a;
+      border: 1px solid #5a2a2a;
+      border-radius: 10px;
+      padding: 16px;
+      color: #e07070;
+      font-size: 0.9rem;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>⚖️ Legal Case Finder</h1>
+    <p>Search 24,000+ Australian Federal Court cases using AI</p>
+  </header>
+
+  <div class="search-card">
+    <textarea id="queryInput"
+      placeholder="Describe your legal situation... e.g. 'copyright infringement of digital content'"></textarea>
+
+    <div class="models-row">
+      <label class="model-checkbox active" id="cosineLabel">
+        <input type="checkbox" id="cosineCheck" checked/>
+        <div class="checkmark"></div>
+        <div class="model-info">
+          <div class="model-name">Cosine Similarity</div>
+          <div class="model-desc">Find most similar past cases</div>
+        </div>
+      </label>
+
+      <label class="model-checkbox" id="bayesLabel">
+        <input type="checkbox" id="bayesCheck"/>
+        <div class="checkmark"></div>
+        <div class="model-info">
+          <div class="model-name">Naive Bayes</div>
+          <div class="model-desc">Predict likely case outcome</div>
+        </div>
+      </label>
+    </div>
+
+    <button class="search-btn" id="searchBtn" onclick="search()">
+      Search Cases
+    </button>
+  </div>
+
+  <div class="error-msg" id="errorMsg"></div>
+  <div class="loader" id="loader">
+    <div class="loader-spinner"></div>
+    Searching through 24,000+ cases...
+  </div>
+
+  <div class="results-section" id="results"></div>
+
+</div>
+
+<script>
+  // Toggle checkboxes
+  ['cosine', 'bayes'].forEach(model => {
+    document.getElementById(`${model}Label`).addEventListener('click', function() {
+      this.classList.toggle('active');
+    });
+  });
+
+  async function search() {
+    const query   = document.getElementById('queryInput').value.trim();
+    const cosine  = document.getElementById('cosineLabel').classList.contains('active');
+    const bayes   = document.getElementById('bayesLabel').classList.contains('active');
+
+    if (!query) return alert('Please enter a legal query.');
+    if (!cosine && !bayes) return alert('Please select at least one model.');
+
+    // Show loader
+    document.getElementById('loader').style.display = 'block';
+    document.getElementById('results').style.display = 'none';
+    document.getElementById('errorMsg').style.display = 'none';
+    document.getElementById('searchBtn').disabled = true;
+
+    try {
+      const res = await fetch('http://127.0.0.1:5000/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, cosine, bayes })
+      });
+
+      const data = await res.json();
+      renderResults(data, cosine, bayes);
+
+    } catch (err) {
+      document.getElementById('errorMsg').style.display = 'block';
+      document.getElementById('errorMsg').textContent =
+        '❌ Could not connect to backend. Make sure Python server is running on port 5000.';
+    } finally {
+      document.getElementById('loader').style.display = 'none';
+      document.getElementById('searchBtn').disabled = false;
+    }
+  }
+
+  function pillClass(outcome) {
+    return 'outcome-pill pill-' + outcome;
+  }
+
+  function renderResults(data, cosine, bayes) {
+    let html = '';
+
+    // Naive Bayes result
+    if (bayes && data.predicted_outcome) {
+      html += `
+        <p class="section-title">Predicted Outcome</p>
+        <div class="outcome-card">
+          <div class="outcome-label">${data.predicted_outcome}</div>
+          <div class="confidence-bar-wrap">
+            <div class="confidence-text">Confidence: ${data.confidence}%</div>
+            <div class="confidence-bar">
+              <div class="confidence-fill" style="width: ${data.confidence}%"></div>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    // Cosine similarity results
+    if (cosine && data.similar_cases) {
+      html += `<p class="section-title">Top Similar Cases</p>`;
+      data.similar_cases.forEach((c, i) => {
+        html += `
+          <div class="case-card">
+            <div class="case-header">
+              <div class="case-title">${i + 1}. ${c.case_title}</div>
+              <div class="similarity-badge">${(c.similarity * 100).toFixed(1)}% match</div>
+            </div>
+            <div class="case-footer">
+              <span class="${pillClass(c.case_outcome)}">${c.case_outcome}</span>
+              <span class="case-id">${c.case_id}</span>
+            </div>
+          </div>`;
+      });
+    }
+
+    const resultsDiv = document.getElementById('results');
+    resultsDiv.innerHTML = html;
+    resultsDiv.style.display = 'block';
+  }
+
+  // Allow Ctrl+Enter to search
+  document.getElementById('queryInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) search();
+  });
+</script>
+</body>
+</html>
